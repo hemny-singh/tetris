@@ -61,34 +61,53 @@ function makeTank(c) {
   ];
 }
 
-function App() {
+const colors = ['yellow', 'white', 'orange', 'pink', 'sky', 'mustard'];
+const blocks = [makeTank, makeLine, makeZ, makeBox]
+
+const getRandomInt = (max) => {
+  return Math.floor(Math.random()*max)
+}
+const generateRandomBlock = () => {
+  const color = colors[getRandomInt(colors.length)];
+  return blocks[getRandomInt(blocks.length)](color)
+}
+
+function App(props) {
   const w = 30;
   const h = 50;
   const dim = 10;
 
   const [ tiles, setTiles ] = React.useState(makeL('yellow'));
-  // console.log("tile", tiles)
+
   useEffect(() => {
-    const interval = setInterval(()=> {
-      setTiles((prevState) => {
-        prevState.forEach(tile => {
-          if (tile.y === 51) {
-            clearInterval(interval);
+    const timeout  = setTimeout(() => {
+      setTiles(prevState => {
+        const newState = [];
+        for(let i=0; i<prevState.length; i++){
+          const tile = prevState[i];
+          if(tile.y === 50){
+            return generateRandomBlock()
           }
-        })
-        return prevState.map((obj) => ({
-          ...obj, y: obj.y+1
-        }))
+            
+
+          newState.push({
+            ...prevState[i],
+            y: prevState[i].y+1
+          })
+        }
+        return newState;
       })
-    }, 100);
-  }, [])
+    }, props.frquency || 100);
+
+    return () => clearTimeout(timeout)
+  }, [tiles])
 
 
   return (
     <div className="root">
-      {/* <h1>Tetris</h1>
+      <h1>Tetris</h1>
       <div>The shapes fall from top to bottom.</div>
-      <div>Add code to make a random shape appear and then fall towards the bottom.</div> */}
+      <div>Add code to make a random shape appear and then fall towards the bottom.</div><br/>
       <div className="gamecontainer" style={{ 
         position: "relative",
         width: w * dim,
