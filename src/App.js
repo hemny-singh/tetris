@@ -2,7 +2,7 @@ import './App.css';
 import React, { useEffect } from "react";
 
 function Cell({ cell, dim }) {
-  return (<div 
+  return (<div
     className="cell"
     style={{
       position: "absolute",
@@ -61,15 +61,53 @@ function makeTank(c) {
   ];
 }
 
+const shapesFunList = [
+  makeLine,
+  makeBox,
+  makeZ,
+  makeTank
+];
+
+const colors = [
+  'red',
+  'yellow',
+  'green',
+  'teal'
+];
+
+const MAX_RANDOM_NUMBER = shapesFunList.length;
+
+const getRandomShapeAndColor = () => {
+  const random = Math.floor(Math.random() * MAX_RANDOM_NUMBER);
+  return {
+    shapeFn: shapesFunList[random],
+    color: colors[random]
+  };
+}
+
 function App() {
   const w = 30;
   const h = 50;
   const dim = 10;
 
-  const [ tiles, setTiles ] = React.useState(makeL('yellow'));
-  // console.log("tile", tiles)
+  const initTile = makeL('yellow');
+  const [ newTile, setNewTile ] = React.useState(initTile);
+  const [ tiles, setTiles ] = React.useState(newTile);
+
   useEffect(() => {
-    const interval = setInterval(()=> {
+    const interval = setInterval(() => {
+      const {shapeFn, color } = getRandomShapeAndColor();
+      setNewTile(shapeFn(color));
+    }, 1000);
+
+    return () => {
+      clearInterval(interval);
+    }
+  }, [])
+
+  useEffect(() => {
+    setTiles(newTile);
+    const interval = setInterval(() => {
       setTiles((prevState) => {
         prevState.forEach(tile => {
           if (tile.y === 51) {
@@ -81,7 +119,7 @@ function App() {
         }))
       })
     }, 100);
-  }, [])
+  }, [newTile[0].c])
 
 
   return (
@@ -89,7 +127,7 @@ function App() {
       {/* <h1>Tetris</h1>
       <div>The shapes fall from top to bottom.</div>
       <div>Add code to make a random shape appear and then fall towards the bottom.</div> */}
-      <div className="gamecontainer" style={{ 
+      <div className="gamecontainer" style={{
         position: "relative",
         width: w * dim,
         height: (h + 1) * dim
