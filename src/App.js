@@ -1,5 +1,5 @@
 import './App.css';
-import React, { useEffect } from "react";
+import React, { useEffect, useCallback, useState } from "react";
 
 function Cell({ cell, dim }) {
   return (<div
@@ -15,6 +15,15 @@ function Cell({ cell, dim }) {
   >
   </div>);
 }
+
+const Tiles = ({ tiles, dim }) => (
+  tiles && Array.isArray(tiles) ?
+    tiles.map((it, i) => {
+      return (
+        <Cell cell={it} key={i} dim={dim}/>
+      );
+    }) : null
+)
 
 function makeLine(c) {
   return [
@@ -91,26 +100,31 @@ function App() {
   const dim = 10;
 
   const initTile = makeL('yellow');
-  const [ newTile, setNewTile ] = React.useState(initTile);
-  const [ tiles, setTiles ] = React.useState(newTile);
+  const [ tileCount, setTileCount ] = useState(0);
+  const [ tiles, setTiles ] = useState(initTile);
+  const [ reachedTilesSet, setReachedTilesSet] = useState([[]]);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
+  const memoizedSetNewRandomShape = useCallback(
+    () => {
       const {shapeFn, color } = getRandomShapeAndColor();
-      setNewTile(shapeFn(color));
-    }, 1000);
+      setTiles(shapeFn(color));
+    }, []);
 
-    return () => {
-      clearInterval(interval);
-    }
-  }, [])
+  const memoizedSetReachedTiles = (newTiles) => {
+    setReachedTilesSet([
+      ...reachedTilesSet,
+      newTiles
+    ]);
+  };
 
   useEffect(() => {
-    setTiles(newTile);
     const interval = setInterval(() => {
       setTiles((prevState) => {
         prevState.forEach(tile => {
           if (tile.y === 51) {
+            setTileCount(tileCount+1);
+            memoizedSetNewRandomShape();
+            memoizedSetReachedTiles(prevState);
             clearInterval(interval);
           }
         })
@@ -119,7 +133,7 @@ function App() {
         }))
       })
     }, 100);
-  }, [newTile[0].c])
+  }, [tileCount])
 
 
   return (
@@ -132,13 +146,18 @@ function App() {
         width: w * dim,
         height: (h + 1) * dim
        }}>
-         {
-            tiles.map((it, i) => {
-              return (
-                <Cell cell={it} key={i} dim={dim}/>
-              );
-            })
-         }
+         <div>
+          <Tiles tiles={tiles} dim={dim} />
+         </div>
+         <div>
+          {
+            reachedTilesSet?.map((rTiles, i) => (
+              <div key={`tileset_${i}`}>
+                <Tiles key={`reachedTile_${i}`} tiles={rTiles} dim={dim} />
+              </div>
+            ))
+          }
+         </div>
       </div>
     </div>
   );
